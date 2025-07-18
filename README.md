@@ -10,7 +10,7 @@ Welcome to B_Laban, a beautifully crafted e-commerce platform offering a seamles
   <p><em>📱 Interactive screenshot slideshow - Navigate through all application features</em></p>
 </div>
 
-**Live Demo:** [Coming Soon]()
+**Live Demo:** [b-laban.pages.dev](https://b-laban.pages.dev/)
 
 ---
 
