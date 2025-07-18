@@ -195,15 +195,15 @@ const ProductCard = memo(function ProductCard({
 
   const baseUrl = process.env.REACT_APP_IMAGE_BASE_URL;
 
-  const resolvedImageUrl = product.image?.startsWith("http")
-      ? product?.image
-      : `${baseUrl}${product?.image || product?.imageUrl}`;
+  // const resolvedImageUrl = product.image?.startsWith("http")
+  //     ? product?.image
+  //     : `${baseUrl}${product?.image || product?.imageUrl}`;
 
   const renderProductImage = () => {
     return (
       <div className="relative overflow-hidden rounded-t-xl h-48 md:h-56 group">
         <img
-          src={resolvedImageUrl}
+          src={product?.image}
           alt={product?.name}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
         />

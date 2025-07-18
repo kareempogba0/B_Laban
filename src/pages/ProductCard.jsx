@@ -26,13 +26,13 @@ function ProductCard({ product }) {
 
     const baseUrl = process.env.REACT_APP_IMAGE_BASE_URL;
 
-    const resolvedImageUrl = product.image?.startsWith("http")
-      ? product?.image
-      : `${baseUrl}${product?.image || product?.imageUrl}`;
+    // const resolvedImageUrl = product.image?.startsWith("http")
+    //   ? product?.image
+    //   : `${baseUrl}${product?.image || product?.imageUrl}`;
 
   return (
     <div className="border rounded shadow-lg p-4 flex flex-col">
-      <img src={resolvedImageUrl} alt={product.name} className="h-40 object-contain mb-4" />
+      <img src={product?.image} alt={product.name} className="h-40 object-contain mb-4" />
       
       {/* Brand display */}
       {/*{product.brand && (*/}

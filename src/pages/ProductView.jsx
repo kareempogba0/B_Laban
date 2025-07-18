@@ -234,9 +234,9 @@ function ProductView() {
   // Calculate discount percentage for display
   const discountPercentage = calculateDiscountPercentage();
 
-  const resolvedImageUrl = product.image?.startsWith("http")
-      ? product?.image
-      : `${baseUrl}${product?.image || product?.imageUrl}`;
+  // const resolvedImageUrl = product.image?.startsWith("http")
+  //     ? product?.image
+  //     : `${baseUrl}${product?.image || product?.imageUrl}`;
 
   return (
     <>
@@ -289,7 +289,7 @@ function ProductView() {
               <div className="lg:w-1/2 p-4">
                 <div className="border rounded-lg overflow-hidden">
                   <img
-                    src={resolvedImageUrl}
+                    src={product?.image}
                     alt={product.name}
                     className="w-full h-full object-contain"
                   />
