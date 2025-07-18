@@ -203,11 +203,11 @@ function ProductView() {
     return null;
   };
 
-  const imageUrl = (similarProduct?.image || similarProduct?.imageUrl)
-      ? (similarProduct.image?.startsWith("http")
-          ? similarProduct.image
-          : `${baseUrl}${similarProduct.image || similarProduct.imageUrl}`)
-      : "/placeholder-image.jpg";
+  // const imageUrl = (similarProduct?.image || similarProduct?.imageUrl)
+  //     ? (similarProduct.image?.startsWith("http")
+  //         ? similarProduct.image
+  //         : `${baseUrl}${similarProduct.image || similarProduct.imageUrl}`)
+  //     : "/placeholder-image.jpg";
 
   if (loading) {
     return (
@@ -289,7 +289,7 @@ function ProductView() {
               <div className="lg:w-1/2 p-4">
                 <div className="border rounded-lg overflow-hidden">
                   <img
-                    src={resolvedImageUrl} //activeImage
+                    src={resolvedImageUrl}
                     alt={product.name}
                     className="w-full h-full object-contain"
                   />
