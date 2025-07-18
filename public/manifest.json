@@ -1,0 +1,70 @@
+{
+  "short_name": "BLaban",
+  "name": "BLaban - Your Online Desert Shop",
+  "description": "BLaban is your go-to online store for authentic Egyptian deserts, offering a wide range of traditional sweets and snacks. Experience the taste of Egypt delivered to your doorstep.",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16", 
+      "type": "image/x-icon",
+      "purpose": "any maskable"
+    }
+  ],
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "theme_color": "#8B4513",
+  "background_color": "#ffffff",
+  "prefer_related_applications": false,
+  "categories": ["shopping", "lifestyle"],
+  "screenshots": [
+    {
+      "src": "/screenshots/1-mobile.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "platform": "narrow", 
+      "label": "Homepage of BLaban - Mobile View"
+    },
+    {
+      "src": "/screenshots/2-mobile.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "platform": "narrow",
+      "label": "Sign In - Mobile View"
+    },
+    {
+      "src": "/screenshots/1-desktop.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "platform": "wide",
+      "label": "Homepage of BLaban - Desktop View"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "View Cart",
+      "url": "/cart",
+      "description": "View your shopping cart", 
+      "icons": [{ "src": "/icons/cart.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "My Account", 
+      "url": "/my-account",
+      "description": "View your account details",
+      "icons": [{ "src": "/icons/account.png", "sizes": "192x192" }]
+    }
+  ],
+  "related_applications": [],
+  "dir": "ltr",
+  "lang": "en-EG",
+  "launch_handler": {
+    "client_mode": ["auto", "navigate"]
+  },
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "handle_links": "preferred"
+}
