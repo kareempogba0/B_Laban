@@ -24,9 +24,11 @@ function ProductCard({ product }) {
     }).format(Number(price));
   };
 
-  const resolvedImageUrl = product.image?.startsWith("http")
+    const baseUrl = process.env.REACT_APP_IMAGE_BASE_URL;
+
+    const resolvedImageUrl = product.image?.startsWith("http")
       ? product?.image
-      : `http://localhost:3000${product?.image || product?.imageUrl}`;
+      : `${baseUrl}${product?.image || product?.imageUrl}`;
 
   return (
     <div className="border rounded shadow-lg p-4 flex flex-col">

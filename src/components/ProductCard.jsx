@@ -193,9 +193,11 @@ const ProductCard = memo(function ProductCard({
    * @returns {JSX.Element} Product image with overlay actions
    */
 
+  const baseUrl = process.env.REACT_APP_IMAGE_BASE_URL;
+
   const resolvedImageUrl = product.image?.startsWith("http")
       ? product?.image
-      : `http://localhost:3000${product?.image || product?.imageUrl}`;
+      : `${baseUrl}${product?.image || product?.imageUrl}`;
 
   const renderProductImage = () => {
     return (

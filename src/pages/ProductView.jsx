@@ -33,6 +33,9 @@ function ProductView() {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.user?.currentUser);
 
+  const baseUrl = process.env.REACT_APP_IMAGE_BASE_URL;
+
+
   useEffect(() => {
     /**
      * Signals to prerendering services that the page content is ready
@@ -200,6 +203,12 @@ function ProductView() {
     return null;
   };
 
+  const imageUrl = (similarProduct?.image || similarProduct?.imageUrl)
+      ? (similarProduct.image?.startsWith("http")
+          ? similarProduct.image
+          : `${baseUrl}${similarProduct.image || similarProduct.imageUrl}`)
+      : "/placeholder-image.jpg";
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -227,7 +236,7 @@ function ProductView() {
 
   const resolvedImageUrl = product.image?.startsWith("http")
       ? product?.image
-      : `http://localhost:3000${product?.image || product?.imageUrl}`;
+      : `${baseUrl}${product?.image || product?.imageUrl}`;
 
   return (
     <>
@@ -607,13 +616,7 @@ function ProductView() {
                       {/* Product Image */}
                       <div className="h-48 overflow-hidden">
                         <img
-                            src={
-                              (similarProduct?.image || similarProduct?.imageUrl)
-                                  ? (similarProduct.image?.startsWith("http")
-                                      ? similarProduct.image
-                                      : `http://localhost:3000${similarProduct.image || similarProduct.imageUrl}`)
-                                  : '/placeholder-image.jpg'
-                            }
+                            src={similarProduct.image}
                             alt={similarProduct.name}
                             className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
                         />
