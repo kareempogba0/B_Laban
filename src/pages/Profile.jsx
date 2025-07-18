@@ -355,15 +355,15 @@ function MyAccount() {
     }
 
     const resolveImageUrl = (product) => {
-        const imageUrl = product?.image || product?.imageUrl;
-        if (!imageUrl) return 'https://via.placeholder.com/150?text=No+Image';
-        if (imageUrl.startsWith('http')) return imageUrl;
-        const baseUrl = process.env.REACT_APP_IMAGE_BASE_URL || '';
-        if (!baseUrl) {
-            console.error("REACT_APP_IMAGE_BASE_URL is not set in .env file!");
-            return 'https://via.placeholder.com/150?text=Config+Error';
+        const imageUrl = product.image || product.imageUrl; // Check for both fields
+        if (!imageUrl) {
+            return 'https://via.placeholder.com/150?text=No+Image'; // Return a fallback
         }
-        return `${baseUrl.replace(/\/$/, '')}/${imageUrl.replace(/^\//, '')}`;
+        if (imageUrl.startsWith("http") || imageUrl.startsWith("https://")) {
+            return imageUrl;
+        }
+        // Assuming your assets are served from the public folder of your dev server
+        return `${window.location.origin}${imageUrl}`;
     };
 
     return (

@@ -234,9 +234,17 @@ function ProductView() {
   // Calculate discount percentage for display
   const discountPercentage = calculateDiscountPercentage();
 
-  // const resolvedImageUrl = product.image?.startsWith("http")
-  //     ? product?.image
-  //     : `${baseUrl}${product?.image || product?.imageUrl}`;
+  const resolveImageUrl = (product) => {
+    const imageUrl = product.image || product.imageUrl; // Check for both fields
+    if (!imageUrl) {
+      return 'https://via.placeholder.com/150?text=No+Image'; // Return a fallback
+    }
+    if (imageUrl.startsWith("http") || imageUrl.startsWith("https://")) {
+      return imageUrl;
+    }
+    // Assuming your assets are served from the public folder of your dev server
+    return `${window.location.origin}${imageUrl}`;
+  };
 
   return (
     <>
@@ -289,7 +297,7 @@ function ProductView() {
               <div className="lg:w-1/2 p-4">
                 <div className="border rounded-lg overflow-hidden">
                   <img
-                    src={product?.image}
+                    src={resolveImageUrl(product)}
                     alt={product.name}
                     className="w-full h-full object-contain"
                   />

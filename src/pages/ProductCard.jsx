@@ -26,13 +26,21 @@ function ProductCard({ product }) {
 
     const baseUrl = process.env.REACT_APP_IMAGE_BASE_URL;
 
-    // const resolvedImageUrl = product.image?.startsWith("http")
-    //   ? product?.image
-    //   : `${baseUrl}${product?.image || product?.imageUrl}`;
+    const resolveImageUrl = (product) => {
+        const imageUrl = product.image || product.imageUrl; // Check for both fields
+        if (!imageUrl) {
+            return 'https://via.placeholder.com/150?text=No+Image'; // Return a fallback
+        }
+        if (imageUrl.startsWith("http") || imageUrl.startsWith("https://")) {
+            return imageUrl;
+        }
+        // Assuming your assets are served from the public folder of your dev server
+        return `${window.location.origin}${imageUrl}`;
+    };
 
   return (
     <div className="border rounded shadow-lg p-4 flex flex-col">
-      <img src={product?.image} alt={product.name} className="h-40 object-contain mb-4" />
+      <img src={resolveImageUrl(product)} alt={product.name} className="h-40 object-contain mb-4" />
       
       {/* Brand display */}
       {/*{product.brand && (*/}

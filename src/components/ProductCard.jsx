@@ -193,17 +193,24 @@ const ProductCard = memo(function ProductCard({
    * @returns {JSX.Element} Product image with overlay actions
    */
 
-  const baseUrl = process.env.REACT_APP_IMAGE_BASE_URL;
 
-  // const resolvedImageUrl = product.image?.startsWith("http")
-  //     ? product?.image
-  //     : `${baseUrl}${product?.image || product?.imageUrl}`;
+  const resolveImageUrl = (product) => {
+    const imageUrl = product.image || product.imageUrl; // Check for both fields
+    if (!imageUrl) {
+      return 'https://via.placeholder.com/150?text=No+Image'; // Return a fallback
+    }
+    if (imageUrl.startsWith("http") || imageUrl.startsWith("https://")) {
+      return imageUrl;
+    }
+    // Assuming your assets are served from the public folder of your dev server
+    return `${window.location.origin}${imageUrl}`;
+  };
 
   const renderProductImage = () => {
     return (
       <div className="relative overflow-hidden rounded-t-xl h-48 md:h-56 group">
         <img
-          src={product?.image}
+          src={resolveImageUrl(product)}
           alt={product?.name}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
         />

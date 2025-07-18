@@ -141,37 +141,17 @@ function OrderSummary() {
   }, [orderId, user]);
 
   const resolveImageUrl = (product) => {
-    // Safely get the image path from the product object
-    const imageUrl = product?.image || product?.imageUrl;
-
-    // --- Critical Check 1: No Image Path ---
-    if (!imageUrl || typeof imageUrl !== 'string') {
-      console.warn(`[Image Resolver] Product "${product?.name || 'ID: ' + product?.productId}" is missing a valid image URL string.`);
-      return 'https://via.placeholder.com/150?text=No+Image';
+    const imageUrl = product.image || product.imageUrl; // Check for both fields
+    if (!imageUrl) {
+      return 'https://via.placeholder.com/150?text=No+Image'; // Return a fallback
     }
-
-    // --- Critical Check 2: It's already a full URL ---
-    if (imageUrl.startsWith('http')) {
+    if (imageUrl.startsWith("http") || imageUrl.startsWith("https://")) {
       return imageUrl;
     }
-
-    // --- Critical Check 3: Environment variable is missing ---
-    const baseUrl = process.env.REACT_APP_IMAGE_BASE_URL;
-    if (!baseUrl) {
-      console.error(`[FATAL ERROR] REACT_APP_IMAGE_BASE_URL is not defined in your .env file! Cannot resolve relative image paths.`);
-      // Return a very obvious "error" image
-      return 'https://via.placeholder.com/150?text=ENV+VAR+MISSING';
-    }
-
-    // --- If all checks pass, construct the URL ---
-    // This logic ensures there's always exactly one slash between them.
-    const finalUrl = `${baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl}/${imageUrl.startsWith('/') ? imageUrl.slice(1) : imageUrl}`;
-
-    // This log is for you to verify the final URL in the console.
-    console.log(`[Image Resolver] Constructed URL for "${product.name}":`, finalUrl);
-
-    return finalUrl;
+    // Assuming your assets are served from the public folder of your dev server
+    return `${window.location.origin}${imageUrl}`;
   };
+
   const formatPrice = (price) => {
     return new Intl.NumberFormat('en-EG', {
       style: 'currency',

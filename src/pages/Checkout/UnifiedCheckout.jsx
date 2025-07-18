@@ -224,6 +224,18 @@ function UnifiedCheckout() {
         logEnvironmentVars();
     }, []);
 
+    const resolveImageUrl = (product) => {
+        const imageUrl = product.image || product.imageUrl; // Check for both fields
+        if (!imageUrl) {
+            return 'https://via.placeholder.com/150?text=No+Image'; // Return a fallback
+        }
+        if (imageUrl.startsWith("http") || imageUrl.startsWith("https://")) {
+            return imageUrl;
+        }
+        // Assuming your assets are served from the public folder of your dev server
+        return `${window.location.origin}${imageUrl}`;
+    };
+
     // Cart details with product info
     const cartDetails = cartItems.map(item => {
         const product = products.find(p => p.id === item.productId);
@@ -870,7 +882,7 @@ function UnifiedCheckout() {
                                                             <div
                                                                 className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
                                                                 <img
-                                                                    src={item.product.image}
+                                                                    src={resolveImageUrl(item.product)}
                                                                     alt={item.product.name}
                                                                     className="h-full w-full object-contain object-center"
                                                                 />
