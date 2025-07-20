@@ -83,34 +83,53 @@ function Wishlist() {
    * Uses a batch operation to minimize API calls
    */
   const handleClearWishlist = async () => {
-    if (!user || items.length === 0) return;
-    
+    if (!user) return;
+    console.log('Attempting to clear wishlist for user UID:', user.uid);
     setClearLoading(true);
-    
     try {
-      logger.user.action("Clear wishlist", { count: items.length });
-      
-      // Batch operation for deleting all wishlist items
+      // Get a reference to the user's wishlist collection
+      const wishlistCollectionRef = collection(db, `users/${user.uid}/wishlist`);
+
+      // Get a snapshot of all documents in the collection
+      const snapshot = await getDocs(wishlistCollectionRef);
+
+      if (snapshot.empty) {
+        toast.info("Wishlist is already empty.");
+        dispatch(setWishlistItems([])); // Ensure local state is in sync
+        setConfirmClear(false);
+        setClearLoading(false);
+        return;
+      }
+
+      logger.user.action("Clear wishlist", { count: snapshot.size });
+
+      // Create a batch operation
       const batch = writeBatch(db);
-      
-      // Add all deletions to the batch
-      items.forEach(item => {
-        const docRef = doc(db, `users/${user.uid}/wishlist/${item.id}`);
-        batch.delete(docRef);
+
+      // Add a delete operation for each document to the batch
+      snapshot.docs.forEach(document => {
+        batch.delete(document.ref);
       });
-      
-      // Execute the batch operation (single API call)
+
+      // Execute the batch operation (single atomic API call)
       await batch.commit();
-      
-      // Update Redux state
+
+      // Update Redux state and close the modal
       dispatch(setWishlistItems([]));
       setConfirmClear(false);
-      
-      logger.info("Wishlist cleared successfully", { count: items.length }, "Wishlist");
+
+      logger.info("Wishlist cleared successfully", { count: snapshot.size }, "Wishlist");
       toast.success('Wishlist cleared successfully');
-    } catch (error) {
-      logger.error("Failed to clear wishlist", error, "Wishlist");
-      toast.error('Failed to clear wishlist');
+
+    } catch (err){
+      console.error("WISHLIST CLEAR FAILED:", err);
+      logger.error("Failed to clear wishlist", {code: err.code, message: err.message}, "Wishlist");
+
+      if (err.code === 'permission-denied') {
+        toast.error('Permission denied. Please check your login status.');
+      } else {
+        toast.error('Failed to clear wishlist. Please try again.');
+      }
     } finally {
       setClearLoading(false);
     }

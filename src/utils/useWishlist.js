@@ -1,115 +1,118 @@
 import { useCallback } from 'react';
-import { db, auth } from '../firebase/config';
-import {doc, getDoc, setDoc, deleteDoc, collection, getDocs, writeBatch} from 'firebase/firestore';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { useDispatch, useSelector } from 'react-redux';
-import {addToWishlist as addRedux, clearWishlist, removeFromWishlist as removeRedux} from '../redux/wishlistSlice';
+import { db } from '../firebase/config'; // Assuming auth is not directly used here
+import {
+  doc,
+  setDoc,
+  deleteDoc,
+  collection,
+  getDocs,
+  writeBatch,
+  serverTimestamp // A better way to handle timestamps
+} from 'firebase/firestore';
+import { useSelector, useDispatch } from 'react-redux';
+import {
+  addToWishlist as addWishlistItem,
+  clearWishlist,
+  removeFromWishlist as removeWishlistItem
+} from '../redux/wishlistSlice';
 import { toast } from 'react-toastify';
+import logger from '../utils/logger';
 
 const useWishlist = () => {
-  const [user] = useAuthState(auth);
-  const dispatch = useDispatch();
+  // Get user directly from Redux state for consistency, assuming it's populated on auth change
+  const user = useSelector((state) => state.user.currentUser);
   const wishlistItems = useSelector((state) => state.wishlist.items);
+  const dispatch = useDispatch();
+
+  const resolveImageUrl = (product) => {
+    const imageUrl = product.image || product.imageUrl;
+    if (!imageUrl) {
+      return 'https://via.placeholder.com/150?text=No+Image'; // Return a fallback
+    }
+    if (imageUrl.startsWith("http") || imageUrl.startsWith("https://")) {
+      return imageUrl;
+    }
+    // Assuming your assets are served from the public folder of your dev server
+    return `${window.location.origin}${imageUrl}`;
+  };
 
   const addToWishlist = useCallback(async (product) => {
-    if (!user) throw new Error("User not authenticated");
-
-    const wishlistItemData = {
-      id: product.id,
-      name: product.name || 'Unknown Product',
-      price: product.price || 0,
-      image: product.image || product.imageUrl || '',
-      createdAt: new Date().toISOString(),
-    };
+    if (!user) {
+      toast.error("Please sign in to add items to your wishlist.");
+      return;
+    }
+    if (!product || !product.id) {
+      toast.error("Invalid product data.");
+      return;
+    }
 
     try {
-      // --- THIS IS THE NEW, SAFER LOGIC ---
+      // This path now matches your Wishlist.js component and security rules.
+      const wishlistItemRef = doc(db, 'users', user.uid, 'wishlist', product.id);
 
-      // 1. Define a reference to the user's main wishlist document.
-      const userWishlistDocRef = doc(db, 'wishlists', user.uid);
+      const wishlistItemData = {
+        id: product.id,
+        name: product.name || 'Unknown Product',
+        price: product.price || 0,
+        image: resolveImageUrl(product) || '',
+        addedAt: serverTimestamp(),
+      };
 
-      // 2. Check if this main document exists.
-      const docSnap = await getDoc(userWishlistDocRef);
-      if (!docSnap.exists()) {
-        // If it doesn't exist, create it with some basic info.
-        // This is crucial for satisfying security rules that might check the parent doc.
-        await setDoc(userWishlistDocRef, {
-          userId: user.uid,
-          createdAt: new Date()
-        });
-        console.log("Created parent wishlist document for user:", user.uid);
-      }
-
-      // 3. Now, safely create the document in the 'items' subcollection.
-      const wishlistItemRef = doc(db, 'wishlists', user.uid, 'items', product.id);
       await setDoc(wishlistItemRef, wishlistItemData);
 
-      // 4. Update Redux state
-      dispatch(addRedux(wishlistItemData));
-
+      // We dispatch the data that was sent to Firestore for consistency.
+      dispatch(addWishlistItem(wishlistItemData));
       toast.success(`'${product.name}' added to your wishlist!`);
+      logger.user.action("Add to wishlist", { productId: product.id });
+
     } catch (error) {
       console.error("Error adding to wishlist:", error);
+      logger.error("Failed to add to wishlist", error, "Wishlist");
       toast.error("Failed to add item. Please try again.");
-      throw error;
     }
   }, [user, dispatch]);
 
   const removeFromWishlist = useCallback(async (productId) => {
-    if (!user) throw new Error("User not authenticated");
+    if (!user) return;
     try {
-      const wishlistRef = doc(db, 'wishlists', user.uid, 'items', productId);
-      await deleteDoc(wishlistRef);
-      dispatch(removeRedux(productId));
+      const wishlistItemRef = doc(db, 'users', user.uid, 'wishlist', productId);
+      await deleteDoc(wishlistItemRef);
+      dispatch(removeWishlistItem(productId)); // Use the correct action from your slice
       toast.info("Item removed from your wishlist.");
+      logger.user.action("Remove from wishlist", { productId });
     } catch (error) {
       console.error("Error removing from wishlist:", error);
+      logger.error("Failed to remove from wishlist", error, "Wishlist");
       toast.error("Failed to remove item. Please try again.");
-      throw error;
     }
   }, [user, dispatch]);
 
+  // This function can be removed as it's now duplicated in Wishlist.js
+  // Keeping logic in the component that uses it is cleaner.
+  // If you want to keep it here, it also needs its path corrected:
   const clearEntireWishlist = useCallback(async () => {
-    if (!user) {
-      toast.error("You must be signed in to clear the wishlist.");
-      throw new Error("User not authenticated");
-    }
+    if (!user) return;
 
     try {
-      console.log(`[Wishlist] Attempting to clear wishlist for user: ${user.uid}`);
-
-      const itemsCollectionRef = collection(db, 'wishlists', user.uid, 'items');
-
-      console.log("[Wishlist] Fetching all items to delete...");
+      const itemsCollectionRef = collection(db, 'users', user.uid, 'wishlist');
       const snapshot = await getDocs(itemsCollectionRef);
-      console.log(`[Wishlist] Found ${snapshot.size} items to delete.`);
 
       if (snapshot.empty) {
-        toast.info("Your wishlist is already empty.");
         dispatch(clearWishlist());
         return;
       }
-
       const batch = writeBatch(db);
-      snapshot.docs.forEach(doc => {
-        console.log(`[Wishlist] Staging deletion for item: ${doc.id}`);
-        batch.delete(doc.ref);
-      });
-
-      console.log("[Wishlist] Committing batch delete operation...");
+      snapshot.docs.forEach(doc => batch.delete(doc.ref));
       await batch.commit();
-      console.log("[Wishlist] Batch commit successful!");
 
       dispatch(clearWishlist());
       toast.success("Your wishlist has been cleared.");
+      logger.user.action("Clear wishlist", { count: snapshot.size });
 
     } catch (error) {
-      console.error("--- FULL ERROR CLEARING WISHLIST ---", error);
-      // This will now log the specific Firestore error, likely 'permission-denied'
-      console.error("Error Code:", error.code);
-
-      toast.error("Failed to clear wishlist. Please check console for details.");
-      throw error;
+      console.error("Error clearing wishlist:", error);
+      logger.error("Failed to clear wishlist", error, "Wishlist");
+      toast.error("Failed to clear wishlist. Please try again.");
     }
   }, [user, dispatch]);
 
@@ -117,8 +120,7 @@ const useWishlist = () => {
     return wishlistItems.some(item => item.id === productId);
   }, [wishlistItems]);
 
-
-  return { addToWishlist, removeFromWishlist, isInWishlist, clearEntireWishlist, wishlistItems};
+  return { addToWishlist, removeFromWishlist, isInWishlist, clearEntireWishlist };
 };
 
 export default useWishlist;

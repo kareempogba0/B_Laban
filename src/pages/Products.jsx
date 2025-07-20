@@ -29,6 +29,16 @@ function Products() {
 
   const dispatch = useDispatch();
 
+  const simpleHash = (str) => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash += str.charCodeAt(i);
+    }
+    return hash;
+  };
+
+  const ALLOWED_BANNERS = [1, 2, 4, 5, 6];
+
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -260,12 +270,15 @@ function Products() {
         {categorizedProducts.map(({ category, items }, index) => {
           if (items.length === 0) return null;
           const visibleItems = items.slice(0, visibleCounts[category] || 4);
-          const bannerImage = `/banners/products/${(index % 5) + 1}.webp`;
+          const categoryHash = simpleHash(category);
+          const bannerArrayIndex = categoryHash % ALLOWED_BANNERS.length;
+          const bannerIndex = ALLOWED_BANNERS[bannerArrayIndex];
+          const bannerImage = `/banners/${(bannerIndex % 6) + 1}.webp`;
 
           return (
               <div key={category} className="mb-12 bg-white shadow-lg rounded-lg overflow-hidden">
                 <div className="relative h-48 md:h-60 overflow-hidden group">
-                  <img src={bannerImage} alt={`${category} banner`} className="w-full h-full object-cover transition-transform duration-500 transform group-hover:scale-110" loading="lazy"/>
+                  <img src={bannerImage} alt={`${category} banner`} className="w-full h-full object-fill transition-transform duration-500 transform group-hover:scale-110" loading="lazy"/>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                   <h2 className="absolute bottom-5 left-5 text-3xl font-bold text-white capitalize">{category}</h2>
                 </div>

@@ -201,11 +201,13 @@ function UnifiedCheckout() {
                                 cvv: cardMethod.cvv,
                                 expiry: cardMethod.expiry,
                                 type: cardMethod.type || 'RuPay',
+                                name: userData.name || ''
                             });
                             setPaymentMethod('Card');
                         } else if (upiMethod) {
                             setUpi(upiMethod.upi);
                             setPaymentMethod('UPI');
+                            setCard({ number: '', cvv: '', expiry: '', type: 'Unknown', name:'' });
                         }
                     }
                 } catch (error) {
@@ -481,17 +483,23 @@ function UnifiedCheckout() {
      * Process the order
      */
     const processOrder = async () => {
-        // 1. --- Initial Guard Clauses ---
-        if (!user) {
-            toast.error("You must be signed in to place an order.");
-            return;
-        }
-        if (cartDetails.length === 0) {
-            toast.error("Your cart is empty.");
-            return;
-        }
-        if (cartDetails.length !== cartItems.length) {
-            toast.error("Some items in your cart could not be found. Please refresh.");
+        // --- 1. VALIDATION BLOCK ---
+        if (!user) { toast.error("You must be signed in."); return; }
+        if (cartDetails.length === 0) { toast.error("Your cart is empty."); return; }
+        if (!customerName || !phoneNumber || !address) { toast.error("Please fill in all shipping details."); return; }
+
+        if (paymentMethod === 'Card') {
+            if (!card.number || !card.expiry || !card.cvv) {
+                toast.error("Please complete all credit card fields.");
+                return;
+            }
+        } else if (paymentMethod === 'UPI') {
+            if (!upi || !upi.trim()) {
+                toast.error("Please enter a valid UPI ID.");
+                return;
+            }
+        } else {
+            toast.error("Please select a payment method.");
             return;
         }
 
@@ -500,9 +508,6 @@ function UnifiedCheckout() {
 
         try {
             await runTransaction(db, async (transaction) => {
-                console.log("[Transaction] Starting for user:", user.uid);
-
-                // --- 2. READ PHASE ---
                 const productDocs = [];
                 for (const item of cartDetails) {
                     const productRef = doc(db, "products", item.productId);
@@ -512,61 +517,34 @@ function UnifiedCheckout() {
                     }
                     productDocs.push(productDoc);
                 }
-                console.log("[Transaction] Read Phase Complete. All stock is available.");
 
-                // --- 3. WRITE PHASE ---
-
-                // ** THIS IS THE CRITICAL FIX **
-                // We construct the complete, validated orderData object here.
                 const orderData = {
-                    // This `userId` field MUST match the logged-in user for the security rule to pass.
-                    userId: user.uid,
-                    userEmail: user.email,
-                    userName: customerName,
-                    userPhone: phoneNumber,
-                    items: cartDetails.map(item => ({
-                        productId: item.productId,
-                        name: item.product.name,
-                        price: item.product.price,
-                        quantity: item.quantity,
-                        image: item.product.image || item.product.imageUrl || '',
-                    })),
-                    shippingAddress: address,
-                    shipping: { method: shippingMethod, cost: shippingCost },
+                    userId: user.uid, userEmail: user.email, userName: customerName,
+                    userPhone: phoneNumber, items: cartDetails.map(item => ({
+                        productId: item.productId, name: item.product.name, price: item.product.price,
+                        quantity: item.quantity, image: resolveImageUrl(item.product) || '',
+                    })), shippingAddress: address, shipping: { method: 'Standard', cost: shippingCost },
                     payment: {
                         method: paymentMethod,
                         details: paymentMethod === 'Card'
-                            ? { cardType: card.type, lastFour: card.number.slice(-4) }
-                            : { upiId: upi },
+                            ? { cardType: card.type || 'N/A', lastFour: card.number.slice(-16).slice(-4) }
+                            : { upiId: upi.trim() },
                     },
-                    subtotal: subtotal,
-                    tax: tax,
-                    discount: discountAmount,
-                    totalAmount: total,
-                    status: "Placed",
-                    orderDate: serverTimestamp(), // Use server timestamp for accuracy
+                    subtotal, tax, discount: discountAmount, totalAmount: total,
+                    status: "Placed", orderDate: serverTimestamp(),
                 };
 
-                // Log the object right before you write it to be 100% sure.
-                console.log("[Transaction] Staging order creation with data:", orderData);
-                if (!orderData.userId) {
-                    throw new Error("CRITICAL: userId is missing from orderData before write.");
-                }
-
-                // Stage the order creation
                 transaction.set(newOrderRef, orderData);
 
-                // Stage the stock updates
                 cartDetails.forEach((item, index) => {
                     const productDoc = productDocs[index];
+                    if (!productDoc) throw new Error(`Data mismatch for ${item.product.name}. Please refresh cart.`);
                     const newStock = productDoc.data().stock - item.quantity;
                     transaction.update(productDoc.ref, { stock: newStock });
                 });
             });
 
-            console.log("Transaction successful!");
             toast.success("Order placed successfully!");
-
             dispatch(clearCart());
             navigate(`/summary?orderId=${newOrderRef.id}`);
 

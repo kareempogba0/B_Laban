@@ -624,7 +624,7 @@ function ProductView() {
                       {/* Product Image */}
                       <div className="h-48 overflow-hidden">
                         <img
-                            src={similarProduct.image}
+                            src={resolveImageUrl(similarProduct)}
                             alt={similarProduct.name}
                             className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
                         />

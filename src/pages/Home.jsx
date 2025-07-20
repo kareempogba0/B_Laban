@@ -200,23 +200,6 @@ function Home() {
           </button>
         </Link>
       </m.div>
-
-        {/* Sign Out Button for Authenticated Users */}
-        {auth.currentUser && (
-            <m.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-                className="text-center mt-8 mb-10"
-            >
-                <button
-                onClick={handleSignOut}
-                className="bg-red-600 text-white py-2 px-4 rounded-lg shadow-md hover:bg-red-700 transition duration-300"
-                >
-                Sign Out
-                </button>
-            </m.div>
-            )}
     </m.div>
   );
 }
